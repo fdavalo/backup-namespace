@@ -1,0 +1,15 @@
+function kubectlgetall {
+  for i in $(oc api-resources --verbs=list --namespaced -o name | sort | uniq); do
+    if [[ "${i}" == "packagemanifests.packages.operators.coreos.com" ]]; then continue; fi
+    if [[ "${i}" == "clusterserviceversions.operators.coreos.com" ]]; then continue; fi
+    if [[ "${i}" == "events.events.k8s.io" ]]; then continue; fi
+    if [[ "${i}" == "events" ]]; then continue; fi
+    echo "Resource:" $i
+    oc get --ignore-not-found ${i} -n $2 -o custom-columns="name:metadata.name,namespace:metadata.namespace" | awk '{if (($1!="name")&&($1!="")) system("sh backup-unitaire.sh '${i}' "$2" "$1" '$1'");}' 
+  done
+}
+
+DIR=backup-$(date +'%Y%m%d-%H%M%S')
+mkdir -p $DIR 
+NS=$1
+kubectlgetall $DIR $NS
